@@ -65,6 +65,7 @@ val dices = listOf(
 
 @Composable
 fun DiceCastApp() {
+    var growCastCounter by remember() { mutableStateOf(0) }
     var castCounter by remember() { mutableStateOf(0) }
     var totalScore by remember() { mutableStateOf(0) }
     var diceDots1 by remember() { mutableStateOf(0) }
@@ -79,31 +80,26 @@ fun DiceCastApp() {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        if(castCounter <4 ) {
-            CastButton(
-                castCounter = castCounter,
-                enabledCastButton = true,
-                onRandom = {
-                    // When the function is called, counter goes up with 1
-                    castCounter = castCounter++
+        CastButton(
+            castCounter = growCastCounter,
+            onRandom = {
+                // When the function is called, counter goes up with 1
+                growCastCounter = castCounter++
+                Log.d("castCounter: ", castCounter.toString())
 
-                    // Numbers matching the dots of both dices are raffled
-                    diceDots1 = (1..6).random()
-                    diceDots2 = (1..6).random()
-                }
-            )
-        }
+                // Numbers matching the dots of both dices are raffled
+                diceDots1 = (1..6).random()
+                diceDots2 = (1..6).random()
+                totalScore += countScore(diceDots1, diceDots2)
+            }
+        )
 
-        CountScore(
-            diceDots1, diceDots2,
-            addScore = { diceScore: Int ->
-                //Log.d("diceScore", diceScore.toString())
-                totalScore = totalScore + diceScore
-            })
+        Spacer(modifier = Modifier.height(32.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
+
         ) {
             Text(
                 text = "Pisteet",
@@ -122,41 +118,38 @@ fun DiceCastApp() {
         Spacer(modifier = Modifier.height(32.dp))
 
         // Game is reset after three casts
-        if (castCounter == 4)
-        {
-            StartAgainButton(
-                enabledStartAgainButton = true,
-                startOver = {
-                    enabledCastButton = false
-                    castCounter = 0
-                    totalScore = 0
-                    diceDots1 = 0
-                    diceDots2 = 0
-                }
-            )
-        }
+        StartAgainButton(
+            castCounter = castCounter,
+            startOver = {
+                castCounter = 0
+                growCastCounter = 0
+                totalScore = 0
+                diceDots1 = 0
+                diceDots2 = 0
+            }
+        )
     }
 }
 
 @Composable
-fun CastButton(enabledCastButton : Boolean,
-               castCounter: Int,
+fun CastButton(castCounter: Int,
                onRandom: () -> Unit
 ) {
+    println(castCounter)
     Button(
-        enabled = enabledCastButton,
+        enabled = castCounter < 2,
         onClick = onRandom
     ) {
         Text(text = "Heitä", fontSize = 24.sp)
     }
 }
 @Composable
-fun StartAgainButton(
-    enabledStartAgainButton : Boolean,
-    startOver: () -> Unit
+fun StartAgainButton(castCounter: Int,
+                     startOver: () -> Unit
 ) {
+    println(castCounter)
     Button(
-        enabled = enabledStartAgainButton,
+        enabled = castCounter >= 3,
         onClick = startOver
     ) {
         Text(text = "Aloita Alusta", fontSize = 24.sp)
@@ -182,31 +175,21 @@ fun DiceImage(diceDots1: Int, diceDots2: Int) {
     }
 }
 
-@Composable
-fun CountScore(
-    diceDots1: Int, diceDots2: Int,
-    addScore: (diceScore: Int) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        // When both dices have the same number of dots, sum of dots
-        // will be added to the total score.
-        if (diceDots1 == diceDots2) {
-            addScore(diceDots1 + diceDots2)
-        }
-        // When the first dice has higher number of dots, its number of dots
-        // will be added to the total score.
-        if (diceDots1 > diceDots2) {
-            addScore(diceDots1)
-        }
-        // When the second dice has higher number of dots, its number of dots
-        // will be added to the total score.
-        if (diceDots2 > diceDots1) {
-            addScore(diceDots2)
-        }
+fun countScore(diceDots1: Int, diceDots2: Int): Int {
+    if (diceDots1 == diceDots2) {
+        return diceDots1 + diceDots2
     }
+    // When the first dice has higher number of dots, its number of dots
+    // will be added to the total score.
+    if (diceDots1 > diceDots2) {
+        return diceDots1
+    }
+    // When the second dice has higher number of dots, its number of dots
+    // will be added to the total score.
+    if (diceDots2 > diceDots1) {
+        return diceDots2
+    }
+    return 0
 }
 
 
